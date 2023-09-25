@@ -418,7 +418,7 @@ namespace Opc.Ua.Client
                         }
 
                         // check if the security configuration may have changed
-                        if (sre.StatusCode == StatusCodes.BadSecurityChecksFailed)
+                        if (IsRequiresUpdateFromServerStatusCode(sre.StatusCode))
                         {
                             m_updateFromServer = true;
                             Utils.LogInfo("Reconnect failed due to security check. Request endpoint update from server. {0}", sre.Message);
@@ -492,7 +492,7 @@ namespace Opc.Ua.Client
             }
             catch (ServiceResultException sre)
             {
-                if (sre.InnerResult?.StatusCode == StatusCodes.BadSecurityChecksFailed)
+                if (IsRequiresUpdateFromServerStatusCode(sre.InnerResult?.StatusCode))
                 {
                     // schedule endpoint update and retry
                     m_updateFromServer = true;
@@ -518,6 +518,16 @@ namespace Opc.Ua.Client
             {
                 m_session.OperationTimeout = operationTimeout;
             }
+        }
+
+        /// <summary>
+        /// Returns true if the given <paramref name="statusCode"/> requires an update from server.
+        /// </summary>
+        /// <param name="statusCode">Status code retrieved from an exception</param>
+        /// <returns>True if the given <paramref name="statusCode"/> requires an update from the server. False otherwise.</returns>
+        private bool IsRequiresUpdateFromServerStatusCode(StatusCode? statusCode)
+        {
+            return statusCode == StatusCodes.BadSecurityChecksFailed || statusCode == StatusCodes.BadCertificateInvalid;
         }
 
         /// <summary>
